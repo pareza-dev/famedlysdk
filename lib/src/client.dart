@@ -440,7 +440,9 @@ class Client extends MatrixApi {
         // ignore: deprecated_member_use
         address: address,
       )
-          .catchError((e, s) {
+          .then((value) {}, onError: (e) {
+        Logs().e('got first ${e.toString()}');
+      }).catchError((e, s) {
         Logs().e('Login error', e, s);
       });
       // Connect if there is an access token in the response.
