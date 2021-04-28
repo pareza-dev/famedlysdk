@@ -423,36 +423,40 @@ class Client extends MatrixApi {
     if (homeserver == null && user.isValidMatrixId) {
       await checkHomeserver(user.domain);
     }
-    final loginResp = await super.login(
-      type: type,
-      identifier: identifier,
-      password: password,
-      token: token,
-      deviceId: deviceId,
-      initialDeviceDisplayName: initialDeviceDisplayName,
-      auth: auth,
-      // ignore: deprecated_member_use
-      user: user,
-      // ignore: deprecated_member_use
-      medium: medium,
-      // ignore: deprecated_member_use
-      address: address,
-    );
-
-    // Connect if there is an access token in the response.
-    if (loginResp.accessToken == null ||
-        loginResp.deviceId == null ||
-        loginResp.userId == null) {
-      throw Exception('Registered but token, device ID or user ID is null.');
+    try {
+      final loginResp = await super.login(
+        type: type,
+        identifier: identifier,
+        password: password,
+        token: token,
+        deviceId: deviceId,
+        initialDeviceDisplayName: initialDeviceDisplayName,
+        auth: auth,
+        // ignore: deprecated_member_use
+        user: user,
+        // ignore: deprecated_member_use
+        medium: medium,
+        // ignore: deprecated_member_use
+        address: address,
+      );
+      // Connect if there is an access token in the response.
+      if (loginResp.accessToken == null ||
+          loginResp.deviceId == null ||
+          loginResp.userId == null) {
+        throw Exception('Registered but token, device ID or user ID is null.');
+      }
+      await init(
+        newToken: loginResp.accessToken,
+        newUserID: loginResp.userId,
+        newHomeserver: homeserver,
+        newDeviceName: initialDeviceDisplayName ?? '',
+        newDeviceID: loginResp.deviceId,
+      );
+      return loginResp;
+    } catch (e, s) {
+      Logs().e('Login failed', e, s);
+      rethrow;
     }
-    await init(
-      newToken: loginResp.accessToken,
-      newUserID: loginResp.userId,
-      newHomeserver: homeserver,
-      newDeviceName: initialDeviceDisplayName ?? '',
-      newDeviceID: loginResp.deviceId,
-    );
-    return loginResp;
   }
 
   /// Sends a logout command to the homeserver and clears all local data,
