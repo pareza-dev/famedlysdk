@@ -424,7 +424,8 @@ class Client extends MatrixApi {
       await checkHomeserver(user.domain);
     }
     try {
-      final loginResp = await super.login(
+      final loginResp = await super
+          .login(
         type: type,
         identifier: identifier,
         password: password,
@@ -438,7 +439,10 @@ class Client extends MatrixApi {
         medium: medium,
         // ignore: deprecated_member_use
         address: address,
-      );
+      )
+          .catchError((e, s) {
+        Logs().e('Login error', e, s);
+      });
       // Connect if there is an access token in the response.
       if (loginResp.accessToken == null ||
           loginResp.deviceId == null ||
