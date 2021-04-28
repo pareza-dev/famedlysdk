@@ -423,46 +423,43 @@ class Client extends MatrixApi {
     if (homeserver == null && user.isValidMatrixId) {
       await checkHomeserver(user.domain);
     }
-    try {
-      final loginResp = await super
-          .login(
-        type: type,
-        identifier: identifier,
-        password: password,
-        token: token,
-        deviceId: deviceId,
-        initialDeviceDisplayName: initialDeviceDisplayName,
-        auth: auth,
-        // ignore: deprecated_member_use
-        user: user,
-        // ignore: deprecated_member_use
-        medium: medium,
-        // ignore: deprecated_member_use
-        address: address,
-      )
-          .then((value) {}, onError: (e) {
-        Logs().e('got first ${e.toString()}');
-      }).catchError((e, s) {
-        Logs().e('Login error', e, s);
-      });
-      // Connect if there is an access token in the response.
-      if (loginResp.accessToken == null ||
-          loginResp.deviceId == null ||
-          loginResp.userId == null) {
-        throw Exception('Registered but token, device ID or user ID is null.');
-      }
-      await init(
-        newToken: loginResp.accessToken,
-        newUserID: loginResp.userId,
-        newHomeserver: homeserver,
-        newDeviceName: initialDeviceDisplayName ?? '',
-        newDeviceID: loginResp.deviceId,
-      );
-      return loginResp;
-    } catch (e, s) {
-      Logs().e('Login failed', e, s);
-      rethrow;
+    final loginResp = await super
+        .login(
+          type: type,
+          identifier: identifier,
+          password: password,
+          token: token,
+          deviceId: deviceId,
+          initialDeviceDisplayName: initialDeviceDisplayName,
+          auth: auth,
+          // ignore: deprecated_member_use
+          user: user,
+          // ignore: deprecated_member_use
+          medium: medium,
+          // ignore: deprecated_member_use
+          address: address,
+        )
+        .catchError((e, s) {
+          Logs().e('Login error', e, s);
+        })
+        .whenComplete(() {})
+        .catchError((e, s) {
+          Logs().e('got first ${e.toString()}');
+        });
+    // Connect if there is an access token in the response.
+    if (loginResp.accessToken == null ||
+        loginResp.deviceId == null ||
+        loginResp.userId == null) {
+      throw Exception('Registered but token, device ID or user ID is null.');
     }
+    await init(
+      newToken: loginResp.accessToken,
+      newUserID: loginResp.userId,
+      newHomeserver: homeserver,
+      newDeviceName: initialDeviceDisplayName ?? '',
+      newDeviceID: loginResp.deviceId,
+    );
+    return loginResp;
   }
 
   /// Sends a logout command to the homeserver and clears all local data,
